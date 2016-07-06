@@ -1,0 +1,712 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    
+    "location": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "vmAdminUsernameChefServer": {
+      "defaultValue": "",
+      "type": "String"
+    },
+    "vmAdminPasswordChefServer": {
+      "defaultValue": "",
+      "type": "SecureString"
+    },    
+    "storageAccountName": {
+      "defaultValue": "",
+      "type": "String"
+    },
+    "vmNameChefdelivery": {
+            "defaultValue": "",
+            "type": "String"
+    },
+    "vmNameChefProvision": {
+            "defaultValue": "",
+            "type": "String"
+    },    
+    "vmNameChefbuild1": {
+            "defaultValue": "",
+            "type": "String"
+    },
+    "vmNameChefbuild2": {
+            "defaultValue": "",
+            "type": "String"
+    },    
+    "vmNameChefbuild3": {
+            "defaultValue": "",
+            "type": "String"
+    },
+    "storageAccountType":{
+            "defaultValue": "",
+            "type": "String"
+    }, 
+    "networkInterfaceNameChefProvision": {
+            "defaultValue": "",
+            "type": "String"
+    },
+    "networkInterfaceNameChefdelivery": {
+            "defaultValue": "",
+            "type": "String"
+    },  
+     "networkInterfaceNameChefbuild1": {
+            "defaultValue": "",
+            "type": "String"
+    }, 
+   "networkInterfaceNameChefbuild2": {
+            "defaultValue": "",
+            "type": "String"
+    },  
+    "networkInterfaceNameChefbuild3": {
+            "defaultValue": "",
+            "type": "String"
+    },
+    "publicIPAddressNameChefdelivery": {
+            "defaultValue": "",
+            "type": "String"
+    },
+    "publicIPAddressNameChefprovision": {
+            "defaultValue": "",
+            "type": "String"
+    },  
+     "publicIPAddressNameChefbuild1": {
+            "defaultValue": "",
+            "type": "String"
+    }, 
+    "publicIPAddressNameChefbuild2": {
+            "defaultValue": "",
+            "type": "String"
+    },  
+     "publicIPAddressNameChefbuild3": {
+            "defaultValue": "",
+            "type": "String"
+    },
+    "publicIPAddressType":{
+            "defaultValue": "",
+            "type": "String"
+    },
+    "networkSecurityGroupNameChefdelivery":{
+            "defaultValue": "",
+            "type": "String"
+    },
+    "subnet1Ref":{
+            "defaultValue": "",
+            "type": "String"      
+    },
+    "subnet2Ref":{
+            "defaultValue": "",
+            "type": "String"      
+    },    
+    "subnet3Ref":{
+            "defaultValue": "",
+            "type": "String"      
+    },
+    "subnet4Ref":{
+            "defaultValue": "",
+            "type": "String"      
+    },  
+    "subnet5Ref":{
+            "defaultValue": "",
+            "type": "String"      
+    },      
+    "vmStorageAccountContainerName": {
+            "defaultValue": "",
+            "type": "String"
+    }
+
+  },
+  
+  "variables": {
+    "imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer",
+    "ubuntuOSVersion": "14.04.4-LTS",
+    "clientazureVMUtilsName": "vmCustomizationClientExt",
+    "clientazureVMUtilsScriptUrl": "https://raw.githubusercontent.com/boobalana/bbrepo1/delivery-branch/provision.sh",
+    "clientazureVMUtilsScriptUrl1": "https://raw.githubusercontent.com/boobalana/bbrepo1/delivery-branch/ssh_install.sh",
+    "vmSize": "Standard_DS2_V2",
+    "chefdelPublicIP":"[concat('dns',uniqueString(resourceGroup().id),'chefd')]",
+    "chefproPublicIP":"[concat('dns',uniqueString(resourceGroup().id),'chefpro')]",
+    "chefb1PublicIP":"[concat('dns',uniqueString(resourceGroup().id),'chefb1')]",
+    "chefb2PublicIP":"[concat('dns',uniqueString(resourceGroup().id),'chefb2')]",
+    "chefb3PublicIP":"[concat('dns',uniqueString(resourceGroup().id),'chefb3')]",
+    "osDiskVhdName1": "[concat('http://',parameters('StorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmNameChefdelivery'),'osDisk')]",
+    "osDiskVhdName2": "[concat('http://',parameters('StorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmNameChefProvision'),'osDisk')]",
+    "osDiskVhdName3": "[concat('http://',parameters('StorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmNameChefbuild1'),'osDisk')]",
+    "osDiskVhdName4": "[concat('http://',parameters('StorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmNameChefbuild2'),'osDisk')]",
+    "osDiskVhdName5": "[concat('http://',parameters('StorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmNameChefbuild3'),'osDisk')]"
+  },
+
+  "resources": [
+  
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('publicIPAddressNameChefdelivery')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('chefdelPublicIP')]"
+        }
+      }
+    },
+    
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('publicIPAddressNameChefprovision')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('chefproPublicIP')]"
+        }
+      }
+    },
+    
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('publicIPAddressNameChefbuild1')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('chefb1PublicIP')]"
+        }
+      }
+    },
+    
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('publicIPAddressNameChefbuild2')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('chefb2PublicIP')]"
+        }
+      }
+    },
+    
+        {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('publicIPAddressNameChefbuild3')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('chefb3PublicIP')]"
+        }
+      }
+    },   
+   {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('networkInterfaceNameChefdelivery')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressNameChefdelivery'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupNameChefdelivery'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.7.2.10",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('chefdelPublicIP'))]"
+              },
+              "subnet": {
+                "id": "[parameters('subnet3Ref')]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupNameChefdelivery'))]"
+                }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('networkInterfaceNameChefProvision')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressNameChefprovision'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupNameChefdelivery'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig2",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.7.2.5",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('chefproPublicIP'))]"
+              },
+              "subnet": {
+                "id": "[parameters('subnet3Ref')]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupNameChefdelivery'))]"
+                }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('networkInterfaceNameChefbuild1')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressNameChefbuild1'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupNameChefdelivery'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig3",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.7.2.11",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('chefb1PublicIP'))]"
+              },
+              "subnet": {
+                "id": "[parameters('subnet3Ref')]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupNameChefdelivery'))]"
+                }
+      }
+    },
+        {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('networkInterfaceNameChefbuild2')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressNameChefbuild2'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupNameChefdelivery'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig4",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.7.2.12",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('chefb2PublicIP'))]"
+              },
+              "subnet": {
+                "id": "[parameters('subnet3Ref')]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupNameChefdelivery'))]"
+                }
+      }
+    },
+
+        {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('networkInterfaceNameChefbuild3')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressNameChefbuild3'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupNameChefdelivery'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig5",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.7.2.13",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('chefb3PublicIP'))]"
+              },
+              "subnet": {
+                "id": "[parameters('subnet3Ref')]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupNameChefdelivery'))]"
+                }
+      }
+    },    
+   {
+      "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[parameters('networkSecurityGroupNameChefdelivery')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+           
+                    {
+                        "name": "open",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1300,
+                            "direction": "Inbound"
+                        }
+                    }
+                    
+                    ]
+                  }
+    },
+
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmNameChefdelivery')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+              "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+              "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceNameChefdelivery'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmNameChefdelivery')]",
+          "adminUsername": "[parameters('vmAdminUsernameChefServer')]",
+          "adminPassword": "[parameters('vmAdminPasswordChefServer')]"
+        },
+        "storageProfile": {
+            "imageReference": {
+               "publisher": "[variables('imagePublisher')]",
+                "offer": "[variables('imageOffer')]",
+                "sku" : "[variables('ubuntuOSVersion')]",
+                "version":"latest"
+                
+            },
+          "osDisk": {
+            "name": "[concat(parameters('vmNameChefdelivery'),'osDisk')]",
+            "vhd": {
+                    "uri": "[concat(variables('osDiskVhdName1'),'.vhd')]"
+                        },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('networkInterfaceNameChefdelivery'))]"
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmNameChefProvision')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+              "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+              "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceNameChefProvision'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmNameChefProvision')]",
+          "adminUsername": "[parameters('vmAdminUsernameChefServer')]",
+          "adminPassword": "[parameters('vmAdminPasswordChefServer')]"
+        },
+        "storageProfile": {
+            "imageReference": {
+               "publisher": "[variables('imagePublisher')]",
+                "offer": "[variables('imageOffer')]",
+                "sku" : "[variables('ubuntuOSVersion')]",
+                "version":"latest"
+            },
+          "osDisk": {
+            "name": "[concat(parameters('vmNameChefProvision'),'osDisk')]",
+            "vhd": {
+                    "uri": "[concat(variables('osDiskVhdName2'),'.vhd')]"
+                        },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('networkInterfaceNameChefProvision'))]"
+            }
+          ]
+        }
+      }
+    },
+  {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmNameChefbuild1')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+              "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+              "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceNameChefbuild1'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmNameChefbuild1')]",
+          "adminUsername": "[parameters('vmAdminUsernameChefServer')]",
+          "adminPassword": "[parameters('vmAdminPasswordChefServer')]"
+        },
+        "storageProfile": {
+            "imageReference": {
+               "publisher": "[variables('imagePublisher')]",
+                "offer": "[variables('imageOffer')]",
+                "sku" : "[variables('ubuntuOSVersion')]",
+                "version":"latest"
+            },
+          "osDisk": {
+            "name": "[concat(parameters('vmNameChefbuild1'),'osDisk')]",
+            "vhd": {
+                    "uri": "[concat(variables('osDiskVhdName3'),'.vhd')]"
+                        },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('networkInterfaceNameChefbuild1'))]"
+            }
+          ]
+        }
+      }
+    },
+
+  {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmNameChefbuild2')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+              "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+              "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceNameChefbuild2'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmNameChefbuild2')]",
+          "adminUsername": "[parameters('vmAdminUsernameChefServer')]",
+          "adminPassword": "[parameters('vmAdminPasswordChefServer')]"
+        },
+        "storageProfile": {
+            "imageReference": {
+               "publisher": "[variables('imagePublisher')]",
+                "offer": "[variables('imageOffer')]",
+                "sku" : "[variables('ubuntuOSVersion')]",
+                "version":"latest"
+            },
+          "osDisk": {
+            "name": "[concat(parameters('vmNameChefbuild2'),'osDisk')]",
+            "vhd": {
+                    "uri": "[concat(variables('osDiskVhdName3'),'.vhd')]"
+                        },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('networkInterfaceNameChefbuild2'))]"
+            }
+          ]
+        }
+      }
+    },
+{
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmNameChefbuild3')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+              "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+              "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceNameChefbuild3'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmNameChefbuild3')]",
+          "adminUsername": "[parameters('vmAdminUsernameChefServer')]",
+          "adminPassword": "[parameters('vmAdminPasswordChefServer')]"
+        },
+        "storageProfile": {
+            "imageReference": {
+               "publisher": "[variables('imagePublisher')]",
+                "offer": "[variables('imageOffer')]",
+                "sku" : "[variables('ubuntuOSVersion')]",
+                "version":"latest"
+            },
+          "osDisk": {
+            "name": "[concat(parameters('vmNameChefbuild3'),'osDisk')]",
+            "vhd": {
+                    "uri": "[concat(variables('osDiskVhdName4'),'.vhd')]"
+                        },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('networkInterfaceNameChefbuild3'))]"
+            }
+          ]
+        }
+      }
+    },
+
+{
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmNameChefProvision'),'/', variables('clientazureVMUtilsName'))]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameChefProvision'))]",
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameChefdelivery'))]",
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameChefbuild1'))]",
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameChefbuild2'))]",
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameChefbuild3'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.OSTCExtensions",
+                "type": "CustomScriptForLinux",
+                "typeHandlerVersion": "1.2",
+                "settings": {
+                    "fileUris": [
+                        "[variables('clientazureVMUtilsScriptUrl')]"
+                    ],
+                    "commandToExecute": "sh provision.sh"
+                }
+            }
+        },
+    {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmNameChefdelivery'),'/', variables('clientazureVMUtilsName'))]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameChefdelivery'))]"
+
+            ],
+            "properties": {
+                "publisher": "Microsoft.OSTCExtensions",
+                "type": "CustomScriptForLinux",
+                "typeHandlerVersion": "1.2",
+                "settings": {
+                    "fileUris": [
+                        "[variables('clientazureVMUtilsScriptUrl1')]"
+                    ],
+                    "commandToExecute": "sh ssh_install.sh"
+                }
+            }
+        },
+    {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmNameChefbuild1'),'/', variables('clientazureVMUtilsName'))]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameChefbuild1'))]"
+
+            ],
+            "properties": {
+                "publisher": "Microsoft.OSTCExtensions",
+                "type": "CustomScriptForLinux",
+                "typeHandlerVersion": "1.2",
+                "settings": {
+                    "fileUris": [
+                        "[variables('clientazureVMUtilsScriptUrl1')]"
+                    ],
+                    "commandToExecute": "sh ssh_install.sh"
+                }
+            }
+        },
+    {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmNameChefbuild2'),'/', variables('clientazureVMUtilsName'))]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameChefbuild2'))]"
+
+            ],
+            "properties": {
+                "publisher": "Microsoft.OSTCExtensions",
+                "type": "CustomScriptForLinux",
+                "typeHandlerVersion": "1.2",
+                "settings": {
+                    "fileUris": [
+                        "[variables('clientazureVMUtilsScriptUrl1')]"
+                    ],
+                    "commandToExecute": "sh ssh_install.sh"
+                }
+            }
+        },
+{
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmNameChefbuild3'),'/', variables('clientazureVMUtilsName'))]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameChefbuild3'))]"
+
+            ],
+            "properties": {
+                "publisher": "Microsoft.OSTCExtensions",
+                "type": "CustomScriptForLinux",
+                "typeHandlerVersion": "1.2",
+                "settings": {
+                    "fileUris": [
+                        "[variables('clientazureVMUtilsScriptUrl1')]"
+                    ],
+                    "commandToExecute": "sh ssh_install.sh"
+                }
+            }
+        }  
+  ]
+}
