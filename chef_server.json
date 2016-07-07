@@ -66,7 +66,7 @@
             "type": "object",
             "defaultValue": ""
         },
-        "subnet2Ref": {
+        "subnet1Ref": {
             "type": "string",
             "defaultValue": ""
         },
@@ -172,7 +172,7 @@
                             "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddressNameChefServer'))]"
                         },
                         "subnet": {
-                            "id": "[parameters('subnet2Ref')]"
+                            "id": "[parameters('subnet1Ref')]"
                         }
                     }
                 }],
