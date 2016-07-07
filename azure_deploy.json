@@ -1,0 +1,360 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "West US"
+    },
+    "vmAdminUsernameChefServer": {
+      "defaultValue": "adminuser",
+      "type": "string"
+    },
+    "vmAdminPasswordChefServer": {
+      "defaultValue": "",
+      "type": "SecureString"
+    },
+    "vmSizeChefServer": {
+      "type": "string",
+      "defaultValue": "Standard_D2",
+      "allowedValues": [
+        "Standard_D2"
+      ]
+    },
+    "vmSizeChefDelivery": {
+      "type": "string",
+      "defaultValue": "Standard_DS2_V2",
+      "allowedValues": [
+        "Standard_DS2_V2"
+      ]
+    },
+     "publicIPDomainNameLabelChefServer": {
+     "type": "string",
+     "defaultValue": "publicipdnschefserver99"
+    },
+   
+    "tagvalues": {
+      "type": "object",
+      "defaultValue": {
+        "program": "p2p",
+        "project": "Chefdelivery"
+      }
+    },
+
+    "networkExists": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new"
+      ]
+    },
+
+    "baseUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URL for dependent assets",
+        "artifactsBaseUrl": ""
+      },
+      "defaultValue": "https://raw.githubusercontent.com/boobalana/armt/master"
+    }
+  },
+  "variables": {
+    "location": "[parameters('location')]",
+    "vmNameChefServer": "chefServer",
+    "vmNameChefProvision": "chefProvision",
+    "vmNameChefdelivery": "chefdelivery",
+    "vmNameChefbuild1": "chefbuild1",
+    "vmNameChefbuild2": "chefbuild2",
+    "vmNameChefbuild3": "chefbuild3",
+    "networkInterfaceNameChefServer": "[concat(variables('vmNameChefServer'),'-nic')]",
+    "networkInterfaceNameChefProvision": "[concat(variables('vmNameChefProvision'),'-nic')]",
+    "networkInterfaceNameChefdelivery": "[concat(variables('vmNameChefdelivery'),'-nic')]",
+    "networkInterfaceNameChefbuild1": "[concat(variables('vmNameChefbuild1'),'-nic')]",
+    "networkInterfaceNameChefbuild2": "[concat(variables('vmNameChefbuild2'),'-nic')]",
+    "networkInterfaceNameChefbuild3": "[concat(variables('vmNameChefbuild3'),'-nic')]",
+    "networkSecurityGroupNameChefdelivery": "[concat(variables('networkInterfaceNameChefdelivery'),'-nsg')]", 
+    "networkSecurityGroupNameChefServer": "[concat(variables('networkInterfaceNameChefServer'),'-nsg')]",
+    "virtualNetworkName": "ChefP2PVnet",
+    "vnetAddressPrefix": "10.7.0.0/16",
+    "subnet1Name": "ChefServer",
+    "subnet1Prefix": "10.7.0.0/24",
+    "subnet2Name": "chefclient",
+    "subnet2Prefix": "10.7.1.0/24",
+    "subnet3Name": "chefdelivery",
+    "subnet3Prefix": "10.7.2.0/24",
+    "subnet4Name": "chefws",
+    "subnet4Prefix": "10.7.3.0/24",
+    "subnet5Name": "chefcompliance",
+    "subnet5Prefix": "10.7.4.0/24",
+    "publicIPAddressType": "Dynamic",
+    "publicIPAddressNameChefServer": "publicIPChefclient",
+    "publicIPAddressNameChefdelivery": "publicIPChefdelivery",
+    "publicIPAddressNameChefprovision": "publicIPChefprovision",
+    "publicIPAddressNameChefbuild1": "publicIPChefbuild1",
+    "publicIPAddressNameChefbuild2": "publicIPChefbuild2",
+    "publicIPAddressNameChefbuild3": "publicIPChefbuild3",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+    "subnet2Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet2Name'))]",
+    "subnet3Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet3Name'))]",
+    "subnet4Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet4Name'))]",
+    "subnet5Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet5Name'))]",    
+    "storageAccountName": "[tolower(concat(trim(substring(concat(variables('vmNameChefServer'),'       '),0,6)),uniquestring(resourceGroup().id)))]",
+    "storageAccountType": "Standard_LRS",
+    "vmStorageAccountContainerName": "vhds",
+    "storage-api-version": "2015-06-15",
+    "deployment-api-version": "2015-11-01",
+    "network-api-version": "2015-06-15",
+    "compute-api-version": "2015-06-15",
+    "publisherChefServer": "chef-software",
+    "licenseMode": "10",
+    "offerChoosedChefServer": "[variables(concat('offer', parameters('vmSizeChefServer')))]",
+    "offerStandard_D2": {
+      "vmSize": "Standard_D2",
+      "vmSku": "azure_marketplace_25",
+      "product": "chef-server"
+    }
+
+ },
+  "resources": [{
+      "name": "vnetstorage",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseUrl'), '/chef_vnetstorage.json')]",
+
+          "contentVersion": "1.0.0.0"
+
+        },
+        "parameters": {
+
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
+          "storage-api-version": {
+            "value": "[variables('storage-api-version')]"
+          },
+          "storageAccountType": {
+            "value": "[variables('storageAccountType')]"
+          },
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "network-api-version": {
+            "value": "[variables('network-api-version')]"
+          },
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
+          },
+          "vnetAddressPrefix": {
+            "value": "[variables('vnetAddressPrefix')]"
+          },
+          "subnet1Name": {
+            "value": "[variables('subnet1Name')]"
+          },
+          "subnet1Prefix": {
+            "value": "[variables('subnet1Prefix')]"
+          },
+          "subnet2Name": {
+            "value": "[variables('subnet2Name')]"
+          },
+          "subnet2Prefix": {
+            "value": "[variables('subnet2Prefix')]"
+          },
+          "subnet3Name": {
+            "value": "[variables('subnet3Name')]"
+          },
+          "subnet3Prefix": {
+            "value": "[variables('subnet3Prefix')]"
+          },
+          "subnet4Name": {
+            "value": "[variables('subnet4Name')]"
+          },
+          "subnet4Prefix": {
+            "value": "[variables('subnet4Prefix')]"
+          },
+          "tagvalues": {
+            "value": "[parameters('tagvalues')]"
+          }
+        }
+      }
+    },
+
+ {
+      "name": "chefserver",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "['Microsoft.Resources/deployments/vnetstorage']"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseUrl'), '/chef_server.json')]",
+
+          "contentVersion": "1.0.0.0"
+
+        },
+        "parameters": {
+
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
+
+          "publicIPAddressNameChefServer": {
+            "value": "[variables('publicIPAddressNameChefServer')]"
+          },
+          "publicIPDomainNameLabelChefServer": {
+            "value": "[parameters('publicIPDomainNameLabelChefServer')]"
+          },
+          "networkSecurityGroupNameChefServer": {
+            "value": "[variables('networkSecurityGroupNameChefServer')]"
+          },
+          "networkInterfaceNameChefServer": {
+            "value": "[variables('networkInterfaceNameChefServer')]"
+          },
+          "vmNameChefServer": {
+            "value": "[variables('vmNameChefServer')]"
+          },
+          "vmAdminUsernameChefServer": {
+            "value": "[parameters('vmAdminUsernameChefServer')]"
+          },
+          "vmAdminPasswordChefServer": {
+            "value": "[parameters('vmAdminPasswordChefServer')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
+          "vmStorageAccountContainerName": {
+            "value": "[variables('vmStorageAccountContainerName')]"
+          },
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "network-api-version": {
+            "value": "[variables('network-api-version')]"
+          },
+          "compute-api-version": {
+            "value": "[variables('compute-api-version')]"
+          },
+          "tagvalues": {
+            "value": "[parameters('tagvalues')]"
+          },
+          "publisherChefServer": {
+            "value": "[variables('publisherChefServer')]"
+          },
+          "offerChoosedChefServer": {
+            "value": "[variables('offerChoosedChefServer')]"
+          },
+          "subnet1Ref": {
+            "value": "[variables('subnet1Ref')]"
+          },
+          "publicIPAddressType": {
+            "value": "[variables('publicIPAddressType')]"
+          }
+        }
+      }
+    },
+
+ {
+      "name": "chefdelivery",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "['Microsoft.Resources/deployments/vnetstorage']"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseUrl'), '/chef_delivery.json')]",
+
+          "contentVersion": "1.0.0.0"
+
+        },
+        "parameters": {
+
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
+          "publicIPAddressNameChefdelivery": {
+            "value": "[variables('publicIPAddressNameChefdelivery')]"
+          },
+          "publicIPAddressNameChefprovision": {
+            "value": "[variables('publicIPAddressNameChefprovision')]"
+          },
+          "publicIPAddressNameChefbuild1": {
+            "value": "[variables('publicIPAddressNameChefbuild1')]"
+          },  
+          "publicIPAddressNameChefbuild2": {
+            "value": "[variables('publicIPAddressNameChefbuild2')]"
+          },
+         "publicIPAddressNameChefbuild3": {
+            "value": "[variables('publicIPAddressNameChefbuild3')]"
+          },                                    
+          "networkSecurityGroupNameChefdelivery": {
+            "value": "[variables('networkSecurityGroupNameChefdelivery')]"
+          },
+          "networkInterfaceNameChefProvision": {
+            "value": "[variables('networkInterfaceNameChefProvision')]"
+          },
+           "networkInterfaceNameChefdelivery": {
+            "value": "[variables('networkInterfaceNameChefdelivery')]"
+          },
+           "networkInterfaceNameChefbuild1": {
+            "value": "[variables('networkInterfaceNameChefbuild1')]"
+          },
+           "networkInterfaceNameChefbuild2": {
+            "value": "[variables('networkInterfaceNameChefbuild2')]"
+          },
+           "networkInterfaceNameChefbuild3": {
+            "value": "[variables('networkInterfaceNameChefbuild3')]"
+          },
+           "vmNameChefdelivery": {
+            "value": "[variables('vmNameChefdelivery')]"
+          },
+          "vmNameChefProvision": {
+            "value": "[variables('vmNameChefProvision')]"
+          },
+          "vmNameChefbuild1": {
+            "value": "[variables('vmNameChefbuild1')]"
+          },
+          "vmNameChefbuild2": {
+            "value": "[variables('vmNameChefbuild2')]"
+          },
+          "vmNameChefbuild3": {
+            "value": "[variables('vmNameChefbuild3')]"
+          },                                        
+         "vmAdminUsernameChefServer": {
+            "value": "[parameters('vmAdminUsernameChefServer')]"
+          },
+         "vmAdminPasswordChefServer": {
+            "value": "[parameters('vmAdminPasswordChefServer')]"
+          },
+          "vmStorageAccountContainerName": {
+            "value": "[variables('vmStorageAccountContainerName')]"
+          },
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "network-api-version": {
+            "value": "[variables('network-api-version')]"
+          },
+          "compute-api-version": {
+            "value": "[variables('compute-api-version')]"
+          },
+          "tagvalues": {
+            "value": "[parameters('tagvalues')]"
+          },
+          "subnet3Ref": {
+            "value": "[variables('subnet3Ref')]"
+          },
+          "publicIPAddressType": {
+            "value": "[variables('publicIPAddressType')]"
+          }
+        }
+      }
+    }
+   ]
+}
